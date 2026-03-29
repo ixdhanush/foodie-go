@@ -7,6 +7,13 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MapPin, CreditCard, ChevronRight, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
+import Script from "next/script";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 export default function CheckoutPage() {
   const { data: session, status } = useSession();
@@ -29,12 +36,72 @@ export default function CheckoutPage() {
     return null;
   }
 
-  const handlePlaceOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
+  const handleRazorpayPayment = async (fullAddress: string) => {
     try {
-      const fullAddress = `${address}, ${city}, ${zip}`;
+      const amount = getTotal() + 5;
+      
+      // 1. Create order on server
+      const orderRes = await fetch("/api/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, currency: "INR" }), // Using INR for Razorpay
+      });
+
+      const orderData = await orderRes.json();
+
+      if (!orderRes.ok) {
+        throw new Error(orderData.message || "Failed to create Razorpay order");
+      }
+
+      // 2. Open Razorpay Modal
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "FoodieGo",
+        description: "Food Order Payment",
+        order_id: orderData.id,
+        handler: async function (response: any) {
+          // 3. Verify payment on server
+          const verifyRes = await fetch("/api/razorpay/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          });
+
+          const verifyData = await verifyRes.json();
+
+          if (verifyRes.ok && verifyData.success) {
+            // 4. Finalize order in database
+            await finalizeOrder(fullAddress, "razorpay");
+          } else {
+            toast.error("Payment verification failed");
+            setLoading(false);
+          }
+        },
+        prefill: {
+          name: session?.user?.name || "",
+          email: session?.user?.email || "",
+        },
+        theme: {
+          color: "#ea580c",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error: any) {
+      toast.error(error.message || "Razorpay initialization failed");
+      setLoading(false);
+    }
+  };
+
+  const finalizeOrder = async (fullAddress: string, method: string) => {
+    try {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -42,7 +109,7 @@ export default function CheckoutPage() {
           items,
           totalAmount: getTotal() + 5,
           deliveryAddress: fullAddress,
-          paymentMethod,
+          paymentMethod: method,
         }),
       });
 
@@ -51,17 +118,32 @@ export default function CheckoutPage() {
         clearCart();
         router.push("/orders");
       } else {
-        toast.error("Failed to place order");
+        toast.error("Failed to place order in our database");
       }
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error("Something went wrong while finalizing order");
     } finally {
       setLoading(false);
     }
   };
 
+  const handlePlaceOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const fullAddress = `${address}, ${city}, ${zip}`;
+
+    if (paymentMethod === "card") {
+      await handleRazorpayPayment(fullAddress);
+    } else {
+      await finalizeOrder(fullAddress, "cod");
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+      
       <h1 className="text-3xl font-black text-slate-900 dark:text-white">Checkout</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -127,8 +209,8 @@ export default function CheckoutPage() {
                     className="w-5 h-5 text-orange-600 focus:ring-orange-500"
                   />
                   <div className="ml-4 flex-1">
-                    <span className="block text-sm font-bold text-slate-900 dark:text-white">Credit / Debit Card</span>
-                    <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">Visa, Mastercard, Amex (Mock)</span>
+                    <span className="block text-sm font-bold text-slate-900 dark:text-white">Online Payment (Razorpay)</span>
+                    <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">Cards, UPI, Netbanking, Wallets</span>
                   </div>
                   {paymentMethod === "card" && <CheckCircle2 className="text-orange-600" size={24} />}
                 </label>
@@ -137,13 +219,11 @@ export default function CheckoutPage() {
                    <motion.div 
                      initial={{ opacity: 0, height: 0 }}
                      animate={{ opacity: 1, height: "auto" }}
-                     className="p-4 border border-slate-200 dark:border-zinc-700 rounded-2xl space-y-4 bg-slate-50 dark:bg-zinc-800"
+                     className="p-4 border border-slate-200 dark:border-zinc-700 rounded-2xl bg-orange-50 dark:bg-orange-900/10"
                    >
-                     <input type="text" placeholder="Card Number" className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-orange-500 transition-all dark:text-white outline-none" />
-                     <div className="flex gap-4">
-                       <input type="text" placeholder="MM/YY" className="w-1/2 px-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-orange-500 transition-all dark:text-white outline-none" />
-                       <input type="text" placeholder="CVC" className="w-1/2 px-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-orange-500 transition-all dark:text-white outline-none" />
-                     </div>
+                     <p className="text-sm text-orange-700 dark:text-orange-300">
+                       You will be redirected to Razorpay to complete your secure payment.
+                     </p>
                    </motion.div>
                 )}
 
