@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Trash2, Plus, Minus, ArrowRight, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
 
+export const dynamic = "force-dynamic";
+
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotal } = useCartStore();
 

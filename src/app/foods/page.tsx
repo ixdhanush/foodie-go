@@ -5,6 +5,8 @@ import FoodCard from "@/components/FoodCard";
 import { Search, Filter } from "lucide-react";
 import { motion } from "framer-motion";
 
+export const dynamic = "force-dynamic";
+
 export default function FoodsPage() {
   const [foods, setFoods] = useState([]);
   const [loading, setLoading] = useState(true);

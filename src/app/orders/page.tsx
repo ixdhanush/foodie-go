@@ -8,6 +8,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default function OrdersPage() {
   const { data: session, status } = useSession();
   const router = useRouter();

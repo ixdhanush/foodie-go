@@ -8,6 +8,9 @@ import { toast } from "sonner";
 import { MapPin, CreditCard, ChevronRight, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Script from "next/script";
+import Image from "next/image";
+
+export const dynamic = "force-dynamic";
 
 declare global {
   interface Window {

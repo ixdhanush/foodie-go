@@ -9,6 +9,8 @@ import { useCartStore } from "@/store/useCartStore";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
+export const dynamic = "force-dynamic";
+
 export default function FoodDetailPage() {
   const { id } = useParams();
   const router = useRouter();

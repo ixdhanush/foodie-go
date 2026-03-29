@@ -3,6 +3,8 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+export const dynamic = "force-dynamic";
 import { Loader2, Plus, Edit2, Trash2, Package } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
