@@ -14,11 +14,10 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  if (status === "unauthenticated") {
-    router.push("/login");
-  }
-
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
     if (status === "authenticated") {
       const fetchOrders = async () => {
         try {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCartStore } from "@/store/useCartStore";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -26,13 +26,23 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
 
-  if (status === "unauthenticated") {
-    router.push("/login");
-    return null;
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    } else if (items.length === 0) {
+      router.push("/cart");
+    }
+  }, [status, items, router]);
+
+  if (status === "loading") {
+     return (
+        <div className="flex justify-center items-center h-[60vh]">
+           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        </div>
+     );
   }
 
-  if (items.length === 0) {
-    router.push("/cart");
+  if (status === "unauthenticated" || items.length === 0) {
     return null;
   }
 
@@ -91,6 +101,11 @@ export default function CheckoutPage() {
           color: "#ea580c",
         },
       };
+
+      if (typeof window === "undefined" || !window.Razorpay) {
+        toast.error("Razorpay SDK failed to load. Please refresh the page.");
+        return;
+      }
 
       const rzp = new window.Razorpay(options);
       rzp.open();
