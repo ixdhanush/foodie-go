@@ -3,7 +3,20 @@
 import { useEffect, useState } from "react";
 import FoodCard from "@/components/FoodCard";
 import { Search, Filter } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+
+const searchSuggestions = [
+  "Search 'Ghee Roast Dosa'",
+  "Search 'Saravana Bhavan'",
+  "Search 'Ambur Star Chicken Biryani'",
+  "Search 'Masala Dosa'",
+  "Search 'Pizza'",
+  "Search 'Burger'",
+  "Search 'Sangeetha Veg Restaurant'",
+  "Search 'Sushi'",
+  "Search 'Filter Coffee'",
+  "Search 'Adyar Ananda Bhavan'"
+];
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +26,16 @@ export default function FoodsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [type, setType] = useState("");
+  const [currentPlaceholderIdx, setCurrentPlaceholderIdx] = useState(0);
 
-  const categories = ["All", "Burgers", "Pizza", "Sushi", "Healthy", "Desserts", "Drinks"];
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPlaceholderIdx((prev) => (prev + 1) % searchSuggestions.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const categories = ["All", "South Indian", "Burgers", "Pizza", "Sushi", "Healthy", "Desserts", "Drinks"];
   const types = ["All", "veg", "non-veg"];
 
   const fetchFoods = async () => {
@@ -45,15 +66,30 @@ export default function FoodsPage() {
   return (
     <div className="space-y-8 pb-12">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-zinc-800">
-        <div className="w-full md:w-1/3 relative">
-          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search yummy food..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-zinc-800 rounded-xl border-none outline-none focus:ring-2 focus:ring-orange-500 transition-shadow dark:text-white"
-          />
+        <div className="w-full md:w-1/3 relative bg-slate-50 dark:bg-zinc-800 rounded-xl flex items-center overflow-hidden transition-shadow focus-within:ring-2 focus-within:ring-orange-500 border-none">
+          <Search size={20} className="absolute left-4 z-10 text-slate-400" />
+          <div className="relative w-full h-[48px] flex items-center">
+            {!search && (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentPlaceholderIdx}
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -20, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute left-12 text-slate-400 pointer-events-none whitespace-nowrap"
+                >
+                  {searchSuggestions[currentPlaceholderIdx]}
+                </motion.div>
+              </AnimatePresence>
+            )}
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-full pl-12 pr-4 bg-transparent border-none outline-none dark:text-white relative z-10 placeholder:text-transparent"
+            />
+          </div>
         </div>
         
         <div className="flex w-full md:w-auto items-center gap-4">

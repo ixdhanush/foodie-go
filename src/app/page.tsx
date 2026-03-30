@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Search, Zap, ShieldCheck, Clock } from "lucide-react";
 import FoodCard from "@/components/FoodCard";
+import HeroSearch from "@/components/HeroSearch";
 import { supabase } from "@/lib/supabase";
 
 const FALLBACK_FOODS = [
@@ -108,14 +109,7 @@ export default async function Home() {
               >
                 Order Now <ArrowRight size={20} />
               </Link>
-              <div className="bg-white dark:bg-zinc-800 rounded-full flex items-center px-6 py-4 shadow-sm border border-slate-100 dark:border-zinc-700">
-                <Search size={20} className="text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search food or restaurant..."
-                  className="bg-transparent border-none outline-none ml-3 w-full text-slate-900 dark:text-white placeholder:text-slate-400"
-                />
-              </div>
+              <HeroSearch />
             </div>
           </div>
 
@@ -169,7 +163,7 @@ export default async function Home() {
         </div>
 
         <div className="flex flex-wrap gap-4 sm:gap-6 justify-center">
-          {["Burgers", "Pizza", "Sushi", "Healthy", "Desserts", "Drinks"].map((cat, i) => (
+          {["South Indian", "Burgers", "Pizza", "Sushi", "Healthy", "Desserts"].map((cat, i) => (
             <Link
               href={`/foods?category=${cat}`}
               key={i}
