@@ -10,6 +10,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "FoodieGo - Modern Food Ordering",
   description: "Order your favorite food with FoodieGo",
+  verification: {
+    google: "lZWaBZ8h_ihN9xqUAVWcTpF-6Ygks6ry_eNsuzb4Ijk",
+  },
 };
 
 export default function RootLayout({
